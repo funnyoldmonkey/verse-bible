@@ -408,17 +408,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ---- VOTD ----
+    // ---- SELF-CONTAINED DAILY VERSE ----
     async function loadVOTD() {
-        try {
-            const res = await fetch(`votd.php?version=${encodeURIComponent(currentVersion)}`);
-            const data = await res.json();
-            if (!data.error) {
-                document.getElementById('votd-text').textContent = data.text;
-                document.getElementById('votd-ref').textContent = data.ref;
-                document.getElementById('votd-box').href = `#read=${encodeURIComponent(data.search)}&v=${currentVersion}`;
-            }
-        } catch(e) {}
+        const verses = [
+            { ref: 'John 3:16', text: 'For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.' },
+            { ref: 'Jeremiah 29:11', text: 'For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.' },
+            { ref: 'Romans 8:28', text: 'And we know that in all things God works for the good of those who love him, who have been called according to his purpose.' },
+            { ref: 'Philippians 4:13', text: 'I can do all this through him who gives me strength.' },
+            { ref: 'Proverbs 3:5-6', text: 'Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight.' },
+            { ref: 'Isaiah 41:10', text: 'So do not fear, for I am with you; do not be dismayed, for I am your God. I will strengthen you and help you; I will uphold you with my righteous right hand.' },
+            { ref: 'Psalm 23:1', text: 'The Lord is my shepherd, I lack nothing.' },
+            { ref: 'Matthew 11:28', text: 'Come to me, all you who are weary and burdened, and I will give you rest.' },
+            { ref: 'Joshua 1:9', text: 'Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.' },
+            { ref: 'Romans 15:13', text: 'May the God of hope fill you with all joy and peace as you trust in him, so that you may overflow with hope by the power of the Holy Spirit.' },
+            { ref: 'Lamentations 3:22-23', text: 'Because of the Lord’s great love we are not consumed, for his compassions never fail. They are new every morning; great is your faithfulness.' },
+            { ref: 'Psalm 46:1', text: 'God is our refuge and strength, an ever-present help in trouble.' },
+            { ref: '2 Timothy 1:7', text: 'For the Spirit God gave us does not make us timid, but gives us power, love and self-discipline.' },
+            { ref: 'Colossians 3:15', text: 'Let the peace of Christ rule in your hearts, since as members of one body you were called to peace. And be thankful.' },
+            { ref: 'Hebrews 11:1', text: 'Now faith is confidence in what we hope for and assurance about what we do not see.' },
+            { ref: 'James 1:5', text: 'If any of you lacks wisdom, you should ask God, who gives generously to all without finding fault, and it will be given to you.' },
+            { ref: '1 Peter 5:7', text: 'Cast all your anxiety on him because he cares for you.' },
+            { ref: '1 John 4:18', text: 'There is no fear in love. But perfect love drives out fear, because fear has to do with punishment.' },
+            { ref: 'Psalm 119:105', text: 'Your word is a lamp for my feet, a light on my path.' },
+            { ref: 'Matthew 6:33', text: 'But seek first his kingdom and his righteousness, and all these things will be given to you as well.' },
+            { ref: 'Isaiah 40:31', text: 'But those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint.' },
+            { ref: 'Micah 6:8', text: 'He has shown you, O mortal, what is good. And what does the Lord require of you? To act justly and to love mercy and to walk humbly with your God.' },
+            { ref: 'Psalm 27:1', text: 'The Lord is my light and my salvation—whom shall I fear? The Lord is the stronghold of my life—of whom shall I be afraid?' },
+            { ref: 'Romans 12:2', text: 'Do not conform to the pattern of this world, but be transformed by the renewing of your mind. Then you will be able to test and approve what God’s will is—his good, pleasing and perfect will.' },
+            { ref: 'Ephesians 2:8', text: 'For it is by grace you have been saved, through faith—and this is not from yourselves, it is the gift of God.' }
+        ];
+
+        // Shift the "day" logic back by 2 hours so days physically roll over at 2:00 AM instead of 12:00 MN
+        const now = new Date();
+        now.setHours(now.getHours() - 2); 
+        
+        // Generate a deterministic integer seed for the current modified day (YYYY+MM+DD)
+        const seedStr = `${now.getFullYear()}${now.getMonth()}${now.getDate()}`;
+        
+        // Convert the date string into a hash integer
+        let hash = 0;
+        for (let i = 0; i < seedStr.length; i++) {
+            hash = seedStr.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        
+        // Pick a pseudo-random verse based strictly on the current day's hash modulo
+        const index = Math.abs(hash) % verses.length;
+        const dailyVerse = verses[index];
+
+        document.getElementById('votd-text').textContent = `"${dailyVerse.text}"`;
+        document.getElementById('votd-ref').textContent = dailyVerse.ref;
+        document.getElementById('votd-box').href = `#read=${encodeURIComponent(dailyVerse.ref)}&v=${currentVersion}`;
     }
 
     // ---- ROUTING ----
