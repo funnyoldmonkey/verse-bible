@@ -20,8 +20,8 @@
                 "John-2-15": "teal"
             },
             "default_version": "NKJV",
-            "theme": "light",
-            "font_size": 1.1
+            "theme": "sepia",
+            "font_size": 0.8
         }
     ]
 }

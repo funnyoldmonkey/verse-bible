@@ -355,12 +355,17 @@ button, input, select, a.nav-btn {
 }
 .reader-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
     font-family: var(--font-ui);
     font-size: 0.9rem;
     color: var(--muted-text);
+}
+.reader-header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 .reader-header select {
     border: 1px solid var(--input-border);
@@ -676,8 +681,12 @@ button, input, select, a.nav-btn {
 }
 .color-pane {
     width: 170px;
+    min-width: 170px;
     padding: 10px;
-    right: 0;
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 8px;
 }
 .color-grid {
     display: grid;
@@ -769,6 +778,42 @@ button, input, select, a.nav-btn {
 @media (max-width: 600px) {
     .reader-container {
         padding: 2rem 5% 5rem;
+    }
+    .reader-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        margin: 0 0 1.5rem 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box;
+    }
+    #reader-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+        min-width: 0;
+        text-align: left;
+    }
+    .reader-header-right {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        margin-left: 10px !important;
+        flex-shrink: 0;
+        justify-content: flex-end;
+    }
+    .reader-header .reader-controls {
+        gap: 4px;
+    }
+    .reader-header .ctrl-btn {
+        padding: 4px 6px;
+        font-size: 0.8rem;
+    }
+    .reader-header .selected-val.no-box {
+        padding: 4px 5px;
+        font-size: 0.8rem;
     }
     #present-btn {
         display: none !important;
