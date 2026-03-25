@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verse. Presenter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,700;1,7..72,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --muted-text: #aaaaaa;
+            --font-reader: 'Literata', serif;
+            --font-ui: 'Inter', sans-serif;
+            --accent: #D4AF37;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-reader);
+            height: auto;
+            overflow-y: auto; /* Required for Javascript `.scrollTo` telemetry to function! */
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        /* Hidden WebKit Scrollbar keeps the F11 projector aesthetic strictly perfectly clean */
+        body::-webkit-scrollbar, html::-webkit-scrollbar {
+            display: none;
+        }
+        .presenter-container {
+            max-width: 100rem; /* Scalable 1600px wrapper */
+            margin: 0 auto;
+            padding: 4rem 5% 40vh; /* Padded bottom so we can always scroll the last line to mid-screen */
+            font-size: 3.5rem;
+            line-height: 1.6;
+        }
+        .presenter-header {
+            font-family: var(--font-ui);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 1.5rem;
+            color: var(--muted-text);
+            margin-bottom: 3rem;
+            border-bottom: 0.125rem solid #222; /* 2px */
+            padding-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* Typography overrides for massive projector display */
+        .verse-num {
+            font-family: var(--font-ui);
+            font-size: 0.55em;
+            vertical-align: super;
+            color: var(--accent);
+            margin-right: 12px;
+            font-weight: 500;
+        }
+        .text {
+            color: var(--text-color);
+        }
+        .heading {
+            font-weight: bold;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+            font-size: 1.3em;
+            line-height: 1.1;
+        }
+        
+        /* Highlights sync from user */
+        .hl-yellow { background-color: rgba(246, 224, 94, 0.4); }
+        .hl-pink { background-color: rgba(246, 135, 179, 0.4); }
+        .hl-green { background-color: rgba(104, 211, 145, 0.4); }
+        .hl-blue { background-color: rgba(99, 179, 237, 0.4); }
+        .hl-purple { background-color: rgba(183, 148, 244, 0.4); }
+        .hl-orange { background-color: rgba(246, 173, 85, 0.4); }
+        .hl-teal { background-color: rgba(79, 209, 197, 0.4); }
+        .hl-red { background-color: rgba(252, 129, 129, 0.4); }
+        .hl-grey { background-color: rgba(160, 174, 192, 0.4); }
+
+        /* Hidden BibleGateway UI clutter */
+        sup.crossreference, .footnotes, .crossrefs, .chapternum, .publisher-info-bottom { display: none !important; }
+
+        /* Fullscreen Overlay Gate */
+        #fs-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bg-color); z-index: 9999; 
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        #fs-text {
+            color: var(--accent); font-family: var(--font-ui); font-size: 2rem; 
+            border: 1px solid var(--accent); padding: 2rem 4rem; border-radius: 12px;
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="fs-overlay">
+        <div id="fs-text" style="text-align: center;">Click or Press Any Key<br><span style="font-size: 1rem; opacity: 0.8; text-transform: none;">to Start Projector Fullscreen</span></div>
+    </div>
+
+    <div class="presenter-container">
+        <div class="presenter-header">
+            <span id="p-title">Waiting for signal...</span>
+            <span id="p-version">---</span>
+        </div>
+        <div id="p-content" style="opacity: 0.5;">Launch the reader in the main Verse. window to broadcast text here.</div>
+    </div>
+
+    <script>
+        function attemptFullscreen(e) {
+            const overlay = document.getElementById('fs-overlay');
+            if (overlay) overlay.style.display = 'none';
+            if (document.documentElement.requestFullscreen && (!e || e.isTrusted !== false)) {
+                document.documentElement.requestFullscreen().catch(() => {
+                    if (overlay) overlay.style.display = 'flex'; // Fail safe block
+                });
+            }
+        }
+
+        document.getElementById('fs-overlay').addEventListener('click', attemptFullscreen);
+        window.addEventListener('keydown', attemptFullscreen);
+
+        // Attempt synthetic auto-click (Warning: Browsers drop Transient Activation flags on JS-simulated clicks for security APIs like Fullscreen)
+        setTimeout(() => {
+            const overlay = document.getElementById('fs-overlay');
+            if (overlay && overlay.style.display !== 'none') overlay.click();
+        }, 300);
+
+        function updateScreen(data) {
+            document.getElementById('p-title').textContent = data.title;
+            document.getElementById('p-version').textContent = data.version;
+            document.getElementById('p-content').style.opacity = '1';
+            document.getElementById('p-content').innerHTML = data.html;
+            applyScroll(0);
+        }
+
+        function applyFontSize(size) {
+            document.querySelector('.presenter-container').style.fontSize = size + 'rem';
+        }
+
+        function applyScroll(pct) {
+            // Absolute height minus viewport height equals mathematically strict theoretical max-bottom
+            const maxScroll = document.body.scrollHeight - window.innerHeight;
+            if (maxScroll > 0) {
+                window.scrollTo({
+                    top: maxScroll * (pct / 100),
+                    behavior: 'auto'
+                });
+            }
+        }
+
+        // Advanced boot initialization fallback loop against Chromium IPC read lag
+        function attemptBoot() {
+            const initial = localStorage.getItem('ob_presenter_data');
+            if (initial) {
+                try { 
+                    updateScreen(JSON.parse(initial)); 
+                    return true; 
+                } catch(e) {}
+            }
+            return false;
+        }
+
+        if (!attemptBoot()) {
+            setTimeout(attemptBoot, 50);
+            setTimeout(attemptBoot, 200);
+            setTimeout(() => {
+                if (!attemptBoot() && window.opener) {
+                    window.opener.postMessage({type: 'requestPresenterData'}, '*');
+                }
+            }, 500);
+        }
+
+        const storedSize = localStorage.getItem('ob_presenter_fontsize');
+        if (storedSize) applyFontSize(storedSize);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('preview') === 'true') {
+            document.getElementById('fs-overlay').style.display = 'none'; // Auto-bypass for live preview
+
+            // Allow this frame to scroll natively on Chromium and broadcast it live!
+            document.documentElement.style.overflowY = 'auto';
+            document.body.style.overflowY = 'auto';
+            
+            // Pure relative geometric scaling algorithm:
+            // Overriding the root html font-size scales all REM constraints uniformly!
+            // 4px is exactly 25% of standard 16px. All padding, widths, and fonts natively emulate an exact 16:9 400% zoom with mathematically perfect word-wrap reflowing!
+            document.documentElement.style.fontSize = '4px';
+            
+            // Broadcast live native touch/mouse scrolling directly into persistent memory
+            window.addEventListener('scroll', () => {
+                const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+                if (maxScroll > 0) {
+                    const pct = (window.scrollY / maxScroll) * 100;
+                    localStorage.setItem('ob_presenter_scroll', pct);
+                }
+            });
+        }
+
+        window.addEventListener('message', (e) => {
+            if (e.data && e.data.type === 'closeProjector') {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().then(() => window.close()).catch(() => window.close());
+                } else {
+                    window.close();
+                }
+            }
+            if (e.data && e.data.type === 'setFontSize') {
+                applyFontSize(e.data.size);
+            }
+            if (e.data && e.data.type === 'setPresenterData') {
+                updateScreen(e.data.payload);
+            }
+            if (e.data && e.data.type === 'setScroll') {
+                applyScroll(e.data.pct);
+            }
+        });
+
+        // Listen for live updates from the main tab
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'ob_presenter_data') {
+                try {
+                    const data = JSON.parse(e.newValue);
+                    updateScreen(data);
+                } catch(err){}
+            }
+            if (e.key === 'ob_presenter_fontsize') {
+                applyFontSize(e.newValue);
+            }
+            if (e.key === 'ob_presenter_scroll') {
+                applyScroll(e.newValue);
+            }
+        });
+
+        // Unobtrusive Fullscreen Fallback: Clicking anywhere on the F11 output immediately maximizes it natively
+        // Useful if the active Chromium build strictly prohibits automated true-fullscreen overrides globally
+        document.body.addEventListener('dblclick', () => {
+            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>
