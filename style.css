@@ -722,6 +722,50 @@ button, input, select, a.nav-btn {
 }
 
 /* Mobile Margins Fix */
+/* App Download Badges */
+.app-download-row {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 30px auto;
+    max-width: 400px;
+}
+.download-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+.download-badge:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.15);
+    transform: translateY(-1px);
+}
+.download-badge .dl-small {
+    display: block;
+    font-family: var(--font-ui);
+    font-size: 0.6rem;
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.download-badge .dl-big {
+    display: block;
+    font-family: var(--font-ui);
+    font-size: 1rem;
+    font-weight: 600;
+}
+.ios-badge {
+    opacity: 0.5;
+}
+
 @media (max-width: 600px) {
     .reader-container {
         padding: 2rem 5% 5rem;
