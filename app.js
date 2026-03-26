@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const libBackBtn = document.getElementById('lib-back-btn');
     const modalBooksGrid = document.getElementById('modal-books-grid');
     const modalChaptersGrid = document.getElementById('modal-chapters-grid');
+    const libCloseBtn = document.getElementById('lib-close-btn');
     
     let currentLibraryData = {};
     
@@ -56,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function init() {
         initTheme();
         applyFontSize();
-        setupDropdowns();
+        setupVersionModal();
         setupSwipe();
         
         // Load data concurrently
@@ -335,44 +336,50 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const res = await fetch('data/versions.json');
             versionsList = await res.json();
-            renderDropdown('home');
-            renderDropdown('reader');
+            renderVersionList();
         } catch(e) { console.error("Failed to load versions", e); }
     }
 
-    function setupDropdowns() {
-        ['home', 'reader'].forEach(prefix => {
-            const selected = document.getElementById(`${prefix}-selected`);
-            const pane = document.getElementById(`${prefix}-dropdown`);
-            const search = document.getElementById(`${prefix}-version-search`);
-            if(!selected) return;
-            
-            selected.addEventListener('click', () => {
-                pane.classList.toggle('open');
-                if(pane.classList.contains('open')) search.focus();
-            });
-            
-            search.addEventListener('input', () => renderDropdown(prefix, search.value));
+    function setupVersionModal() {
+        const modal = document.getElementById('version-modal');
+        const searchInput = document.getElementById('version-modal-search');
+        const closeBtn = document.getElementById('version-close-btn');
+
+        function openModal() {
+            modal.classList.add('visible');
+            renderVersionList();
+            searchInput.value = '';
+            setTimeout(() => searchInput.focus(), 50);
+        }
+
+        function closeModal() {
+            modal.classList.remove('visible');
+        }
+
+        document.getElementById('home-version-widget')?.addEventListener('click', openModal);
+        document.getElementById('reader-version-widget')?.addEventListener('click', openModal);
+        closeBtn?.addEventListener('click', closeModal);
+
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
         });
 
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('#home-version-widget') && document.getElementById('home-dropdown')) {
-                document.getElementById('home-dropdown').classList.remove('open');
-            }
-            if (!e.target.closest('#reader-version-widget') && document.getElementById('reader-dropdown')) {
-                document.getElementById('reader-dropdown').classList.remove('open');
-            }
+        searchInput?.addEventListener('input', (e) => {
+            renderVersionList(e.target.value);
         });
     }
 
-    function renderDropdown(prefix, filter = '') {
-        const list = document.getElementById(`${prefix}-version-list`);
-        const selected = document.getElementById(`${prefix}-selected`);
-        if (!list || !selected || versionsList.length === 0) return;
-        
+    function renderVersionList(filter = '') {
+        const list = document.getElementById('version-modal-list');
+        if (!list || versionsList.length === 0) return;
+
         list.innerHTML = '';
-        const currentObj = versionsList.find(v => v.id === currentVersion) || {id: currentVersion, name: currentVersion};
-        selected.innerHTML = `${currentObj.id} &#9662;`;
+        
+        // Update labels
+        ['home', 'reader'].forEach(prefix => {
+            const el = document.getElementById(`${prefix}-selected`);
+            if (el) el.innerHTML = `${currentVersion} &#9662;`;
+        });
 
         const filtered = versionsList.filter(v => 
             v.id.toLowerCase().includes(filter.toLowerCase()) || 
@@ -381,27 +388,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filtered.forEach(v => {
             const li = document.createElement('li');
+            li.style.padding = '12px 15px';
+            li.style.borderBottom = '1px solid var(--border-color)';
+            li.style.cursor = 'pointer';
+            li.style.fontFamily = 'var(--font-ui)';
+            
+            if (v.id === currentVersion) {
+                li.style.backgroundColor = 'rgba(186, 168, 126, 0.15)';
+                li.style.fontWeight = 'bold';
+            }
+            
             const cleanName = v.name.replace(/^[- \t]+|[- \t]+$/g, '');
             li.textContent = `${v.id} - ${cleanName}`;
+            
             li.addEventListener('click', () => {
                 currentVersion = v.id;
                 defaultVersion = v.id;
                 saveState();
                 
-                document.getElementById(`${prefix}-dropdown`).classList.remove('open');
-                renderDropdown('home');
-                renderDropdown('reader');
+                document.getElementById('version-modal').classList.remove('visible');
+                
+                // Refresh labels
+                ['home', 'reader'].forEach(prefix => {
+                    const el = document.getElementById(`${prefix}-selected`);
+                    if (el) el.innerHTML = `${currentVersion} &#9662;`;
+                });
+
                 loadVOTD();
                 loadLibrary();
                 
-                const votdBox = document.getElementById('votd-box');
-                if (votdBox && votdBox.href.includes('#read=')) {
-                    const currentHrefSearch = votdBox.href.split('&v=')[0];
-                    votdBox.href = `${currentHrefSearch}&v=${currentVersion}`;
-                }
-                
-                if (prefix === 'reader' && currentSearch) {
-                    window.location.hash = `#read=${encodeURIComponent(currentSearch)}&v=${currentVersion}`;
+                if (window.location.hash.startsWith('#read=')) {
+                    // Update hash to force reload with new version
+                    const hashPart = window.location.hash.substring(6);
+                    const search = hashPart.split('&')[0];
+                    window.location.hash = `#read=${search}&v=${currentVersion}`;
                 }
             });
             list.appendChild(li);
@@ -470,8 +490,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (version !== currentVersion) {
                 currentVersion = version;
-                renderDropdown('home');
-                renderDropdown('reader');
+                // Refresh labels
+                ['home', 'reader'].forEach(prefix => {
+                    const el = document.getElementById(`${prefix}-selected`);
+                    if (el) el.innerHTML = `${currentVersion} &#9662;`;
+                });
             }
             showReader(search, version);
         } else {
@@ -482,6 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showHome() {
         homeView.style.display = 'block';
         readerView.style.display = 'none';
+        document.getElementById('reader-version-widget').classList.add('hidden');
         loadRecentReadings();
         window.scrollTo(0,0);
         
@@ -496,6 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function showReader(search, version) {
         homeView.style.display = 'none';
         readerView.style.display = 'block';
+        document.getElementById('reader-version-widget').classList.remove('hidden');
         
         currentSearch = search;
         readerTitle.textContent = search.replace(/\+/g, ' ');
@@ -746,9 +771,6 @@ document.addEventListener('DOMContentLoaded', () => {
         libModalTitle.textContent = group.title;
         libBackBtn.style.display = 'none';
         
-        const spacer = document.getElementById('lib-modal-spacer');
-        if (spacer) spacer.style.display = 'none';
-        
         modalBooksGrid.innerHTML = '';
         modalBooksGrid.style.display = 'grid';
         modalChaptersGrid.style.display = 'none';
@@ -770,9 +792,6 @@ document.addEventListener('DOMContentLoaded', () => {
         libModalTitle.textContent = bookName;
         libBackBtn.style.display = 'block';
         
-        const spacer = document.getElementById('lib-modal-spacer');
-        if (spacer) spacer.style.display = 'block';
-        
         libBackBtn.onclick = () => {
             openTestamentModal(parentTestamentKey);
         };
@@ -791,6 +810,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             modalChaptersGrid.appendChild(a);
         }
+    }
+
+    if (libCloseBtn) {
+        libCloseBtn.addEventListener('click', () => {
+            if (libraryModal) libraryModal.classList.remove('visible');
+        });
     }
 
     if (libraryModal) {
@@ -844,8 +869,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     defaultVersion = data.default_version;
                     currentVersion = defaultVersion;
                     localStorage.setItem('ob_version', defaultVersion);
-                    renderDropdown('home');
-                    renderDropdown('reader');
+                    // Refresh labels
+                    ['home', 'reader'].forEach(prefix => {
+                        const el = document.getElementById(`${prefix}-selected`);
+                        if (el) el.innerHTML = `${currentVersion} &#9662;`;
+                    });
                 }
                 if (data.theme) {
                     localStorage.setItem('ob_theme', data.theme);

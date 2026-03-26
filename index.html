@@ -22,6 +22,10 @@
             </div>
         </a>
         <div class="auth-nav" id="auth-nav">
+            <!-- VERSION SELECTOR (MODAL TRIGGER) -->
+            <div id="reader-version-widget" class="hidden" style="cursor: pointer; padding: 5px 10px; font-family: var(--font-ui); font-size: 0.95rem;">
+                <span id="reader-selected">NIV &#9662;</span>
+            </div>
             <select id="theme-select" style="margin-right: 15px; padding: 5px;">
                 <option value="sepia">Sepia</option>
                 <option value="light">Light</option>
@@ -45,12 +49,8 @@
             </form>
             <div style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
                 <span style="font-family: var(--font-ui); font-size: 0.95rem; opacity: 0.7;">Translation:</span>
-                <div class="custom-select" id="home-version-widget">
-                    <div class="selected-val no-box" id="home-selected">NIV &#9662;</div>
-                    <div class="dropdown-pane" id="home-dropdown">
-                        <input type="text" placeholder="Search versions..." id="home-version-search">
-                        <ul id="home-version-list"></ul>
-                    </div>
+                <div id="home-version-widget" style="cursor: pointer; padding: 5px 15px; border: 1px solid var(--input-border); border-radius: 22px; background: var(--input-bg); font-family: var(--font-ui); font-size: 0.95rem;">
+                    <span id="home-selected">NIV &#9662;</span>
                 </div>
             </div>
         </div>
@@ -87,15 +87,17 @@
 
     <!-- KINDLE READER VIEW -->
     <div id="reader-view" class="reader-container" style="display: none;">
-        <div class="reader-header">
-            <div id="reader-title">...</div>
+        <div class="reader-header" style="margin-bottom: 1rem;">
+            <a href="#" class="ctrl-btn reader-back-btn" title="Back to Home"
+                style="margin-right: 12px; font-size: 1.4rem; padding: 0 5px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">&larr;</a>
             <div class="reader-header-right">
                 <div class="reader-controls">
                     <button id="font-dec" class="ctrl-btn" title="Decrease Font">A-</button>
                     <button id="font-inc" class="ctrl-btn" title="Increase Font">A+</button>
                     <button id="present-btn" class="ctrl-btn" title="Launch Presenter">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 2px;">
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="margin-bottom: 2px;">
                             <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                             <line x1="8" y1="21" x2="16" y2="21"></line>
                             <line x1="12" y1="17" x2="12" y2="21"></line>
@@ -134,14 +136,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="custom-select" id="reader-version-widget">
-                    <div class="selected-val no-box" id="reader-selected">NIV &#9662;</div>
-                    <div class="dropdown-pane" id="reader-dropdown">
-                        <input type="text" placeholder="Search versions..." id="reader-version-search">
-                        <ul id="reader-version-list"></ul>
-                    </div>
-                </div>
             </div>
+            <div id="reader-title">...</div>
         </div>
         <div id="reader-content"></div>
         <div class="reader-nav">
@@ -153,7 +149,10 @@
     <!-- AUTH MODAL -->
     <div id="auth-modal" class="modal">
         <div class="modal-content">
-            <h2 id="modal-title">Login to Verse.</h2>
+            <div class="modal-header">
+                <h2 id="modal-title">Login to Verse.</h2>
+                <button class="modal-close" onclick="document.getElementById('auth-modal').classList.remove('visible')">&times;</button>
+            </div>
             <form id="auth-form">
                 <input type="text" id="username" placeholder="Username" required>
                 <input type="password" id="password" placeholder="Password" required>
@@ -167,12 +166,10 @@
     <!-- LIBRARY MODAL -->
     <div id="library-modal" class="modal">
         <div class="modal-content" style="max-width: 600px; width: 95%;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
-                <button id="lib-back-btn" class="ctrl-btn"
-                    style="display:none; margin: 0; font-size: 1.5rem; padding: 0 10px; width: 44px;">&larr;</button>
-                <h2 id="library-modal-title"
-                    style="margin: 0; font-family: var(--font-reader); flex-grow: 1; text-align: center;">...</h2>
-                <div id="lib-modal-spacer" style="width: 44px; display: none;"></div>
+            <div class="modal-header">
+                <button id="lib-back-btn" class="modal-close" style="display:none; margin:0; font-size:1.8rem;">&larr;</button>
+                <h2 id="library-modal-title" style="flex-grow:1; text-align:center;">...</h2>
+                <button class="modal-close" id="lib-close-btn">&times;</button>
             </div>
 
             <div id="modal-books-grid" class="books-grid"
@@ -260,6 +257,22 @@
     <footer class="app-footer">
         &copy; 2026 Verse. Built with faith by Jall Fiel.
     </footer>
+
+    <!-- BIBLE VERSION MODAL -->
+    <div id="version-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px; height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h2>Select Bible Version</h2>
+                <button class="modal-close" id="version-close-btn">&times;</button>
+            </div>
+            <div style="padding: 10px 0;">
+                <input type="text" placeholder="Search versions..." id="version-modal-search">
+            </div>
+            <ul id="version-modal-list" style="list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1;">
+                <!-- Populated by JS -->
+            </ul>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
