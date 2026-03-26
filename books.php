@@ -26,6 +26,7 @@ if (preg_match('/\[\{"display":"[^"]+","osis":"Gen".*?"osis":"Rev"[^}]*\}\]/s', 
         foreach ($books as $b) {
             $cleaned[] = [
                 'name' => $b['display'],
+                'osis' => $b['osis'],
                 'chapters' => $b['num_chapters'],
                 'testament' => isset($b['testament']) ? $b['testament'] : 'OT'
             ];

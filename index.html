@@ -47,11 +47,19 @@
                     </svg>
                 </button>
             </form>
-            <div style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+            <div style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 2rem;">
                 <span style="font-family: var(--font-ui); font-size: 0.95rem; opacity: 0.7;">Translation:</span>
-                <div id="home-version-widget" style="cursor: pointer; padding: 5px 15px; border: 1px solid var(--input-border); border-radius: 22px; background: var(--input-bg); font-family: var(--font-ui); font-size: 0.95rem;">
+                <div id="home-version-widget"
+                    style="cursor: pointer; padding: 5px 15px; border: 1px solid var(--input-border); border-radius: 22px; background: var(--input-bg); font-family: var(--font-ui); font-size: 0.95rem;">
                     <span id="home-selected">NIV &#9662;</span>
                 </div>
+            </div>
+
+            <!-- CONTINUE READING -->
+            <div id="continue-reading-container" style="display: none;">
+                <a href="#" id="continue-reading-link">
+                    Continue Reading <span id="continue-reading-ref"></span>
+                </a>
             </div>
         </div>
 

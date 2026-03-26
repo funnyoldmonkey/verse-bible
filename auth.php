@@ -45,7 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'highlights' => [],
             'default_version' => 'NIV',
             'theme' => 'sepia',
-            'font_size' => 1.1
+            'font_size' => 1.1,
+            'last_read' => null
         ];
         saveUsers($users);
         
@@ -68,7 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'highlights' => $user['highlights'], 
                     'default_version' => isset($user['default_version']) ? $user['default_version'] : 'NIV',
                     'theme' => isset($user['theme']) ? $user['theme'] : 'sepia',
-                    'font_size' => isset($user['font_size']) ? (float)$user['font_size'] : 1.1
+                    'font_size' => isset($user['font_size']) ? (float)$user['font_size'] : 1.1,
+                    'last_read' => isset($user['last_read']) ? $user['last_read'] : null
                 ]);
                 exit;
             }
@@ -93,6 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (isset($data['default_version'])) $user['default_version'] = $data['default_version'];
                 if (isset($data['theme'])) $user['theme'] = $data['theme'];
                 if (isset($data['font_size'])) $user['font_size'] = (float)$data['font_size'];
+                if (isset($data['last_read'])) $user['last_read'] = $data['last_read'];
                 saveUsers($users);
                 echo json_encode(['success' => true]);
                 exit;
@@ -115,6 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     $defaultVersion = isset($user['default_version']) ? $user['default_version'] : 'NIV';
                     $theme = isset($user['theme']) ? $user['theme'] : 'sepia';
                     $fontSize = isset($user['font_size']) ? (float)$user['font_size'] : 1.1;
+                    $lastRead = isset($user['last_read']) ? $user['last_read'] : null;
                 }
             }
             echo json_encode([
@@ -123,7 +127,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 'highlights' => $highlights, 
                 'default_version' => $defaultVersion,
                 'theme' => $theme,
-                'font_size' => $fontSize
+                'font_size' => $fontSize,
+                'last_read' => $lastRead
             ]);
         } else {
             echo json_encode(['authenticated' => false]);

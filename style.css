@@ -286,8 +286,10 @@ a.nav-btn {
 
 .testament-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 15px;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
 .testament-btn {
@@ -301,6 +303,11 @@ a.nav-btn {
     font-size: 1.2rem;
     color: var(--text-color);
     transition: transform 0.2s, color 0.2s, background 0.2s, border-color 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
 }
 
 .testament-btn:hover {
@@ -769,9 +776,19 @@ a.nav-btn {
     color: var(--accent);
 }
 
-/* Dropdown pane is replaced by modal */
+/* Dropdown pane style for popups like color picker */
 .dropdown-pane {
-    display: none !important;
+    display: none;
+    position: absolute;
+    z-index: 1000;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-pane.open {
+    display: block;
 }
 
 /* Home Widget Seamless */
@@ -882,6 +899,37 @@ a.nav-btn {
     transform: scale(1.02);
 }
 
+#continue-reading-container {
+    text-align: center;
+    margin-top: -1rem;
+}
+
+#continue-reading-link {
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
+    color: var(--text-color);
+    text-decoration: underline;
+    text-decoration-color: rgba(0, 0, 0, 0.1);
+    text-underline-offset: 4px;
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+#continue-reading-link:hover {
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 3px;
+    color: var(--text-color);
+}
+
+:root.theme-dark #continue-reading-link {
+    text-decoration-color: rgba(255, 255, 255, 0.1);
+}
+
+:root.theme-dark #continue-reading-link:hover {
+    text-decoration-color: var(--accent);
+}
+
 /* Footer */
 .app-footer {
     text-align: center;
@@ -984,7 +1032,7 @@ a.nav-btn {
         text-align: right;
         flex: 0 0 70px;
         white-space: nowrap;
-        /*  overflow: hidden;
+        /* overflow: hidden;
         text-overflow: ellipsis; */
     }
 

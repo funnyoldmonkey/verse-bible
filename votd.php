@@ -23,14 +23,14 @@ if (!$json || $httpCode !== 200) {
 
 $data = json_decode($json, true);
 if (isset($data['votd'])) {
-    $text = strip_tags($data['votd']['content']);
-    $ref = $data['votd']['display_ref'];
+    $text = html_entity_decode(strip_tags($data['votd']['content']), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $ref  = html_entity_decode($data['votd']['display_ref'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
     
     echo json_encode([
         'text' => '"' . trim($text) . '"',
         'ref' => $ref,
         'search' => $ref
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 } else {
     echo json_encode(['error' => 'Invalid VOTD Response']);
 }

@@ -41,6 +41,18 @@ if ($passageTextNodes->length == 0) {
 // Get the first matched node (we only need one passage)
 $passageNode = $passageTextNodes->item(0);
 
+// Find the localized reference (header above the text)
+$refNodes = $xpath->query('//*[contains(@class, "dropdown-display-text") or contains(@class, "passage-display")]');
+$localizedRef = $search;
+if ($refNodes->length > 0) {
+    // Get text and clean up any internal fluff
+    $localizedRef = trim($refNodes->item(0)->textContent);
+    // Remove BibleGateway dropdown artifacts like "Psalm 23 Psalm 23" or trailing version codes
+    if (preg_match('/^(.+?)\s+\1/u', $localizedRef, $m)) $localizedRef = $m[1];
+    // Strip trailing version name/code: keep only up to the last digit (book + chapter)
+    if (preg_match('/^(.+\d)\s+\D.*$/u', $localizedRef, $m)) $localizedRef = $m[1];
+}
+
 // We want to aggressively strip BibleGateway clutter like footnotes, cross-references, publisher info
 $nodesToRemove = $xpath->query('.//*[contains(@class, "footnote") or contains(@class, "crossreference") or contains(@class, "crossrefs") or contains(@class, "publisher-info-bottom") or contains(@class, "passage-other-trans")]', $passageNode);
 foreach ($nodesToRemove as $node) {
@@ -108,7 +120,7 @@ echo json_encode([
     'html' => trim($cleanedHtml),
     'prev' => $prevLink,
     'next' => $nextLink,
-    'search' => str_replace('+', ' ', $search),
+    'search' => $localizedRef,
     'version' => $version,
     'url' => $url
 ]);

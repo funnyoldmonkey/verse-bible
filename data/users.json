@@ -29,11 +29,35 @@
             "highlights": {
                 "2Thess-2-2": "yellow",
                 "Judg-2-1": "yellow",
-                "Judg-2-5": "yellow"
+                "Judg-2-5": "yellow",
+                "Exod-21-1": "yellow",
+                "2Thess-2-3": "yellow",
+                "2Thess-2-6": "yellow",
+                "2Thess-2-4": "yellow",
+                "Lam-5-1": "yellow",
+                "Lam-5-2": "yellow"
             },
-            "default_version": "APSD-CEB",
+            "default_version": "NKJV",
             "theme": "sepia",
-            "font_size": 1
+            "font_size": 1,
+            "last_read": {
+                "ref": "John 1\nNew King James Version",
+                "osis": "John",
+                "v": "NKJV"
+            }
+        },
+        {
+            "username": "jalltests",
+            "password": "$2y$10$XNOI9JChRTRjdAi7DuuEjOOOZ0mI9PG.FiPWkG\/0tQ6oxPpG7NdVe",
+            "highlights": [],
+            "default_version": "ERV-AWA",
+            "theme": "dark",
+            "font_size": 1.1,
+            "last_read": {
+                "ref": "Philippians 2",
+                "osis": "Phil",
+                "v": "NLT"
+            }
         }
     ]
 }
