@@ -39,3 +39,6 @@ if (preg_match('/\[\{"display":"[^"]+","osis":"Gen".*?"osis":"Rev"[^}]*\}\]/s', 
 }
 
 echo json_encode(['error' => 'Could not parse book list for ' . $version]);
+
+// Refresh commit: 20260330-1928
+ 
