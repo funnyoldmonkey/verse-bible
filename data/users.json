@@ -35,15 +35,21 @@
                 "2Thess-2-6": "yellow",
                 "2Thess-2-4": "yellow",
                 "Lam-5-1": "yellow",
-                "Lam-5-2": "yellow"
+                "Lam-5-2": "yellow",
+                "Phil-1-6": "red",
+                "Phil-1-11": "red",
+                "Phil-1-4": "teal",
+                "Phil-1-7": "teal",
+                "Phil-2-1": "teal",
+                "Phil-1-1": "yellow"
             },
-            "default_version": "NKJV",
+            "default_version": "APSD-CEB",
             "theme": "sepia",
             "font_size": 1,
             "last_read": {
-                "ref": "John 1\nNew King James Version",
-                "osis": "John",
-                "v": "NKJV"
+                "ref": "2 Tesalonica 2",
+                "osis": "2Thess",
+                "v": "APSD-CEB"
             }
         },
         {

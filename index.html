@@ -283,6 +283,255 @@
     </div>
 
     <script src="app.js"></script>
+	<script>
+// ---- VOTD VERSION FIX v2 ----
+(function() {
+  document.addEventListener('DOMContentLoaded', () => {
+
+    // ── CASE 1: LOGGED-IN USER ──
+    // app.js's checkAuth() updates currentVersion from the server but never
+    // re-calls loadVOTD(). We patch fetch() to detect when auth resolves
+    // with a version different from what VOTD already loaded with.
+
+    const _nativeFetch = window.fetch.bind(window);
+    let votdLoadedWithVersion = null;
+
+    // Track what version VOTD was first loaded with
+    const _origFetch = window.fetch;
+    window.fetch = function(url, opts) {
+      const result = _nativeFetch(url, opts);
+      const urlStr = typeof url === 'string' ? url : url?.url || '';
+
+      // When votd.php is called, record the version it was called with
+      if (urlStr.includes('votd.php')) {
+        const match = urlStr.match(/version=([^&]+)/);
+        if (match) votdLoadedWithVersion = decodeURIComponent(match[1]);
+      }
+
+      // When auth.php?action=me resolves, check if version differs
+      if (urlStr.includes('auth.php') && urlStr.includes('action=me')) {
+        result.then(res => res.clone().json()).then(data => {
+          if (data.authenticated && data.default_version &&
+              data.default_version !== votdLoadedWithVersion) {
+            // Auth returned a different version — reload VOTD with it
+            reloadVOTD(data.default_version);
+          }
+        }).catch(() => {});
+      }
+
+      return result;
+    };
+
+    // ── CASE 2: VERSION CHANGE ──
+    // app.js already calls loadVOTD() on version change, so we don't need to.
+    // But we track it so votdLoadedWithVersion stays current.
+    // (covered by the fetch patch above - votd.php calls update the tracker)
+
+    function reloadVOTD(version) {
+      const votdText = document.getElementById('votd-text');
+      const votdRef  = document.getElementById('votd-ref');
+      const votdBox  = document.getElementById('votd-box');
+      if (!votdText || !votdRef || !votdBox || !version) return;
+
+      _nativeFetch('votd.php?version=' + encodeURIComponent(version))
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) return;
+          votdText.textContent = data.text;
+          votdRef.textContent  = data.ref;
+          votdBox.href = '#read=' + encodeURIComponent(data.search || data.ref) + '&v=' + version;
+          votdLoadedWithVersion = version;
+        })
+        .catch(() => {});
+    }
+
+  });
+})();
+	</script>
+	<script>
+// ---- BLACKOUT FEATURE v3 ----
+(function initBlackout() {
+  document.addEventListener('DOMContentLoaded', () => {
+
+    let blackoutEnabled = true;
+    let projectorWin = null;
+
+    // ── PATCH window.open to capture the projector popup reference ──
+    // app.js calls window.open('present.html', '_blank', ...) — we intercept it here.
+    const _nativeOpen = window.open.bind(window);
+    window.open = function(url, target, features) {
+      const win = _nativeOpen(url, target, features);
+      // Only track present.html popups that are NOT the preview iframe
+      if (url && url.includes('present.html') && (!url.includes('preview=true'))) {
+        projectorWin = win;
+        // Inject overlay into popup as soon as it finishes loading
+        if (win) {
+          const pollReady = setInterval(() => {
+            try {
+              if (win.closed) { clearInterval(pollReady); return; }
+              const doc = win.document;
+              if (doc && doc.readyState === 'complete' && doc.body) {
+                clearInterval(pollReady);
+                injectAndApply(doc, blackoutEnabled);
+              }
+            } catch(e) { /* cross-origin guard, won't happen on localhost */ }
+          }, 100);
+        }
+      }
+      return win;
+    };
+
+    // ── INJECT overlay div + message listener into a document ──
+    function injectAndApply(doc, enabled) {
+      if (!doc || !doc.body) return;
+
+      // Create overlay if not already there
+      if (!doc.getElementById('blackout-overlay')) {
+        const overlay = doc.createElement('div');
+        overlay.id = 'blackout-overlay';
+        overlay.style.cssText = [
+          'position:fixed', 'inset:0', 'background:#000',
+          'z-index:99999', 'pointer-events:none',
+          'transition:opacity 0.35s ease',
+          'opacity:1', 'display:block'
+        ].join(';');
+        doc.body.appendChild(overlay);
+      }
+
+      // Inject a script that listens to localStorage changes for ob_blackout
+      if (!doc.getElementById('blackout-ls-listener')) {
+        const s = doc.createElement('script');
+        s.id = 'blackout-ls-listener';
+        s.textContent = `
+          (function() {
+            function applyBlackout(val) {
+              var o = document.getElementById('blackout-overlay');
+              if (!o) return;
+              if (val === '1') {
+                o.style.display = 'block';
+                o.offsetHeight; // force reflow
+                o.style.opacity = '1';
+              } else {
+                o.style.opacity = '0';
+                setTimeout(function() {
+                  if (o.style.opacity === '0') o.style.display = 'none';
+                }, 380);
+              }
+            }
+            // React to real-time toggles
+            window.addEventListener('storage', function(e) {
+              if (e.key === 'ob_blackout') applyBlackout(e.newValue);
+            });
+            // Also react to postMessage (fallback)
+            window.addEventListener('message', function(e) {
+              if (e.data && e.data.type === 'setBlackout') {
+                applyBlackout(e.data.enabled ? '1' : '0');
+              }
+            });
+          })();
+        `;
+        doc.body.appendChild(s);
+      }
+
+      // Apply current state immediately
+      applyToDoc(doc, enabled);
+    }
+
+    // ── Apply blackout state to an already-injected doc ──
+    function applyToDoc(doc, enabled) {
+      const overlay = doc.getElementById('blackout-overlay');
+      if (!overlay) return;
+      if (enabled) {
+        overlay.style.display = 'block';
+        overlay.offsetHeight;
+        overlay.style.opacity = '1';
+      } else {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+          if (overlay.style.opacity === '0') overlay.style.display = 'none';
+        }, 380);
+      }
+    }
+
+    // ── Broadcast toggle to popup only (NOT the iframe/viewport) ──
+    function broadcast(enabled) {
+      localStorage.setItem('ob_blackout', enabled ? '1' : '0');
+
+      if (projectorWin && !projectorWin.closed) {
+        try {
+          // Direct DOM if same-origin
+          applyToDoc(projectorWin.document, enabled);
+        } catch(e) {}
+        // postMessage as fallback
+        projectorWin.postMessage({ type: 'setBlackout', enabled }, '*');
+      }
+    }
+
+    // ── INSERT THE UI ROW ──
+    function insertBlackoutRow() {
+      const modalContent = document.querySelector('#presenter-modal .modal-content');
+      if (!modalContent || document.getElementById('blackout-row')) return false;
+      const displayRow = modalContent.children[2];
+      if (!displayRow) return false;
+
+      const row = document.createElement('div');
+      row.id = 'blackout-row';
+      row.className = 'hide-when-min';
+      row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;';
+      row.innerHTML = `
+        <label style="font-family:var(--font-ui); font-size:0.9rem; opacity:0.8; display:block; margin-bottom:10px;">
+          Blackout <span style="font-size: 0.75rem; opacity: 0.6;">(Hide content on projector)</span>
+        </label>
+        <button id="blackout-toggle-btn"
+          style="background:#111; color:#fff; border:2px solid #555; border-radius:8px;
+                 width:42px; height:44px; cursor:pointer; font-size:18px;
+                 display:flex; align-items:center; justify-content:center;
+                 transition:background 0.2s, border-color 0.2s, box-shadow 0.2s;
+                 box-shadow:0 0 0 3px rgba(186,168,126,0.6);">
+          ⬛
+        </button>
+      `;
+      displayRow.insertAdjacentElement('afterend', row);
+
+      const btn = document.getElementById('blackout-toggle-btn');
+
+      function refreshBtn() {
+        if (blackoutEnabled) {
+          btn.innerHTML = '⬛';
+          btn.title = 'Blackout ON — click to show content on projector';
+          btn.style.background = '#111';
+          btn.style.borderColor = '#555';
+          btn.style.boxShadow = '0 0 0 3px rgba(186,168,126,0.6)';
+          btn.style.color = '#fff';
+        } else {
+          btn.innerHTML = '🖥️';
+          btn.title = 'Blackout OFF — projector is showing content';
+          btn.style.background = 'rgba(186,168,126,0.15)';
+          btn.style.borderColor = 'rgba(186,168,126,0.8)';
+          btn.style.boxShadow = 'none';
+          btn.style.color = '#baa87e';
+        }
+      }
+
+      btn.addEventListener('click', () => {
+        blackoutEnabled = !blackoutEnabled;
+        refreshBtn();
+        broadcast(blackoutEnabled);
+      });
+
+      refreshBtn();
+      // Set initial storage state
+      localStorage.setItem('ob_blackout', '1');
+      return true;
+    }
+
+    const insertTimer = setInterval(() => {
+      if (insertBlackoutRow()) clearInterval(insertTimer);
+    }, 100);
+
+  });
+})();
+	</script>
 </body>
 
 </html>
